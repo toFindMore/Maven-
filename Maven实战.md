@@ -1,9 +1,9 @@
-## 《Maven实战》读书笔记
+## 《Maven实战》读书笔记                                                    By 周健
 
 1. **准备**
 
-   * 阿里云 CentOS 7.4云主机
-   * 主机已配置java环境
+   * 阿里云 CentOS 7.4 云主机
+   * 主机已配置 java 环境
 
 2. **安装Maven**
 
@@ -144,7 +144,7 @@
 
      * 编写测试类
 
-       在 src 目录下创建 test/java 文件夹，编写HelloWorld的测试类。如下所示， 
+       在 src 目录下创建 test/java 文件夹，编写 HelloWorld 的测试类。如下所示， 
 
        ```java
        package com.juvenxu.mvnbook.helloworld;
@@ -165,7 +165,92 @@
 
        在根目录执行 mvn clean test 命令，BUILD SUCCESS ！
 
-       执行命令 mvn clean test，显示测试报告。
+       执行 mvn surefire:test 命令，显示测试报告。
 
    * **打包和运行**
-     * 运行命令 mvn clean package , 会在 target 文件下生成对应的 jar 包
+
+     * 运行命令 mvn clean package , 会在 target 文件下生成对应的 jar 包。
+
+     * 运行命令 mvn clean install,会在本地仓库创建 jar 包。
+
+       注：本地仓库地址可以运行命令 mvn help:effective-settings 。如下所示：
+
+       ```xml
+       <settings xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+         <localRepository>/root/.m2/repository</localRepository>
+         <pluginGroups>
+           <pluginGroup>org.apache.maven.plugins</pluginGroup>
+           <pluginGroup>org.codehaus.mojo</pluginGroup>
+         </pluginGroups>
+       </settings>
+       ```
+
+       其中的 localRepository 即为本地仓库地址，mvn clean install 生成 jar 包即在此处。
+
+     * 但带有 main 方法的类型是不会被打包到默认的jar文件中的（因为 main 方法的类信息不会添加到manifest中），为了生成可执行的jar文件，需要借助 maven-shade-plugin，配置该插件于 pom.xml 中。如下所示：
+
+       ```xml
+           <version >1.0-SNAPSHOT</version>
+           <name >Maven Hello World Project</name>
+           <dependencies>
+               <!-- https://mvnrepository.com/artifact/junit/junit -->
+               <dependency>
+                   <groupId>junit</groupId>
+                   <artifactId>junit</artifactId>
+                   <version>4.12</version>
+                   <scope>test</scope>
+               </dependency>
+           </dependencies>
+       
+         <build>
+           <plugins>
+             <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-shade-plugin</artifactId>
+               <version>2.4.3</version>
+               <executions>
+                 <execution>
+                   <phase>package</phase>
+                   <goals>
+                     <goal>shade</goal>
+                   </goals>
+                   <configuration>
+                     <transformers>
+                       <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                         <mainClass>com.juvenxu.mvnbook.helloworld.HelloWorld</mainClass>
+                       </transformer>
+                     </transformers>
+                   </configuration>
+                 </execution>
+               </executions>
+             </plugin>
+           </plugins>
+         </build>
+       </project>
+       ```
+
+       再次运行 mvn clean install 命令，会在本地仓库中运行生成的 hello-world-1.0-SNAPSHOT.jar 文件:
+
+       ```bash
+       [root@XXX 1.0-SNAPSHOT]# java -jar hello-world-1.0-SNAPSHOT.jar
+       Hello Maven
+       ```
+
+   * **使用 Archetype 生成项目骨架**
+
+     Maven 3 直接执行 mvn archetype:generate  -DarchetypeCatalog=internal，做如下配置：
+
+     ```bash
+     Define value for property 'groupId': com.juvenxu.mvnbook
+     Define value for property 'artifactId': hello-world
+     Define value for property 'version' 1.0-SNAPSHOT: :
+     Define value for property 'package' com.juvenxu.mvnbook: : com.juvenxu.mvnbook.helloworld
+     Confirm properties configuration:
+     groupId: com.juvenxu.mvnbook
+     artifactId: hello-world
+     version: 1.0-SNAPSHOT
+     package: com.juvenxu.mvnbook.helloworld
+      Y: : Y
+     ```
+
+     即可生成对应的 pom 配置和 文件目录形式。
